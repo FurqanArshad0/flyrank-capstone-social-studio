@@ -53,3 +53,28 @@ def reject_variant(variant_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(variant)
     return {"message": "Variant rejected", "status": variant.status}
+from pydantic import BaseModel
+from datetime import datetime
+
+class ScheduleRequest(BaseModel):
+    scheduled_at: datetime
+
+@router.post("/{variant_id}/schedule")
+def schedule_variant(variant_id: int, request: ScheduleRequest, db: Session = Depends(get_db)):
+    variant = db.query(Variant).filter(Variant.id == variant_id).first()
+    if not variant:
+        raise HTTPException(status_code=404, detail="Variant not found")
+    
+    # Rule: Only approved variants can be scheduled
+    if variant.status != VariantStatus.APPROVED:
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Cannot schedule variant with status '{variant.status}'. Only approved variants can be scheduled."
+        )
+    
+    variant.scheduled_at = request.scheduled_at
+    variant.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(variant)
+    
+    return {"message": f"Variant scheduled for {request.scheduled_at}", "variant": variant}
