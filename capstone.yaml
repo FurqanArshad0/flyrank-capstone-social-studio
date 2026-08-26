@@ -1,0 +1,10 @@
+run: python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
+seed: echo "No seed script yet — use POST /campaigns to create data"
+test: pytest tests/
+base_url: http://localhost:8000
+endpoints:
+  - POST /campaigns
+  - GET /campaigns
+  - POST /variants/{id}/approve
+  - POST /variants/{id}/publish
+  - GET /health
